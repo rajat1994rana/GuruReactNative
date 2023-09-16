@@ -1,0 +1,20 @@
+export default {
+    // regular:'Archivo-Regular',
+    // medium:'Archivo-Medium',
+    // bold:'Archivo-Bold',
+    // black:'Archivo-Black',
+    // regular:'SFUIDisplay-Regular',
+    // medium:'SFUIDisplay-Medium',
+    // bold:'SFUIDisplay-Bold',
+    // black:'SFUIDisplay-Semibold',
+    // regular:'Roboto-Regular',
+    // medium:'Roboto-Medium',
+    // bold:'Roboto-Bold',
+    // black:'Roboto-Black',
+    regular:'OpenSans-Regular',
+    medium:'OpenSans-Medium',
+    bold:'OpenSans-Bold',
+    black:'OpenSans-Semibold',
+italic:'OpenSans-Italic',
+italic_semiBold:'OpenSans-SemiBoldItalic'
+}
