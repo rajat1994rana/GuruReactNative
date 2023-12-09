@@ -124,6 +124,12 @@ export default StyleSheet.create({
     // color: Colors.black
     // fontWeight:'700'
   },
+  font26WhiteBold: {
+    fontSize: textScale(26),
+    fontFamily: fontFamily.bold,
+    color: Colors.white
+    // fontWeight:'700'
+  },
   font16WhiteBold: {
     fontSize: textScale(16),
     color: Colors.white,

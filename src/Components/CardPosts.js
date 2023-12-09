@@ -1,317 +1,434 @@
-import {useNavigation} from '@react-navigation/native';
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import { BlurView } from "@react-native-community/blur";
+import { useNavigation } from "@react-navigation/native";
+import React, { useState } from "react";
 import {
-  Image,
-  Pressable,
-  Text,
-  View,
-  StyleSheet,
-  useColorScheme,
-  TouchableOpacity,
   ScrollView,
-} from 'react-native';
-import ImagePath from '../Constants/ImagePath';
-import NavigationStrings from '../Constants/NavigationStrings';
-import Colors from '../Styles/Colors';
-import commonStyles, {hitSlopProp} from '../Styles/commonStyles';
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import FastImage from "react-native-fast-image";
+import Carousel from "react-native-snap-carousel";
+import ImagePath from "../Constants/ImagePath";
+import Colors from "../Styles/Colors";
+import commonStyles from "../Styles/commonStyles";
 import {
   height,
   moderateScale,
   moderateScaleVertical,
   width,
-} from '../Styles/responsiveSize';
-import {ThemeContext} from './ThemeProvider';
-import {useSelector} from 'react-redux';
+} from "../Styles/responsiveSize";
 
-const CardsPost = ({
-  item,
-  index,
-  onImageView,
-  setisDetailsVisible,
-  setisReportVisible,
-}) => {
+const CardsPost = ({ item, setisReportVisible }) => {
   const navigation = useNavigation();
-  // const ShimmerPlaceHolder = createShimmerPlaceholder(LinearGradient);
-  // const shimmerArrayDark = ['#23262E', '#797b82', '#6B6E77'];
-  //     const shimmerLight = ['#ebebeb', '#c5c5c5', '#ebebeb'];
-  // const colorScheme = useColorScheme();
   const [state, setState] = useState({
     isVidLoading: false,
   });
-  const {isVidLoading} = state;
-  const updateState = data => setState(state => ({...state, ...data}));
-  const {theme} = useContext(ThemeContext);
-
-  return <View style={styles.cardContainer}>
-    <ScrollView contentContainerStyle={{flexGrow:1}} showsVerticalScrollIndicator={false}> 
-      <View style={styles.cardProfileView}>
-      <View style={{flexDirection:"row",alignItems:"center"}}>
-     <Pressable style={styles.profileOuter}>
-              {<Image
-                source={ImagePath.profileImage}
-                style={styles.profileImage}
-              />}
-            </Pressable>
-            <View style={styles.nameView}>
-            <Text style={styles.nameText}>{item?.userName}</Text>
-            <Text style={styles.locationText} numberOfLines={2}>{item?.dateCreated}{' '}{item?.location}</Text>
-            </View>
-            </View>
-            </View>
-            
-            <View style={{marginTop:moderateScaleVertical(8),height:300}}>
-                {item?.postImg?.length!==0&&       
-                <Pressable
-                // onPress={()=>onImageView(item?.postImg)}
-                 style={styles.imageView}
-                >
-                  <Image
-                  source={item?.postImg}
-                  resizeMode='contain'
-                  style={styles.images}
+  const [isShowMore, setIsShowMore] = useState(false);
+  const [activeDot, setactiveDot] = useState(0);
+  return (
+    <View style={styles.cardContainer}>
+      <ScrollView
+        contentContainerStyle={{}}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{ height: 467 }}>
+          <BlurView
+            style={styles.absolute}
+            blurType="dark"
+            blurAmount={0}
+            reducedTransparencyFallbackColor="white"
+          >
+            <View style={styles?.blurInsideView}>
+              <Text style={styles.blurUserName}>{item?.userName}</Text>
+              <Text style={styles.blurDesc}>{item?.userAbout}</Text>
+              <View style={{ flexDirection: "row", marginTop: 8 }}>
+                <Text style={styles.blurManualText}>Mutual Connections: </Text>
+                <View style={{ flexDirection: "row" }}>
+                  <FastImage
+                    source={ImagePath.profileImg1}
+                    style={{ ...styles.userImg }}
                   />
-        </Pressable>
-                }
-                
-            </View>
-            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
-            <Text style={{...commonStyles.font16ItalicNormal,color:Colors.appBlack}}>{item?.content}</Text>
-            <View style={{flexDirection: 'row'}}>
-                <View style={styles.likeView}>
-                  <Image source={ImagePath.likeEmp} />
-                  <Text style={styles.likeText}>5 Like</Text>
+                  <FastImage
+                    source={ImagePath.profileImg1}
+                    style={[styles.userImg, styles.images]}
+                  />
                 </View>
-                <TouchableOpacity>
-                  <Image source={ImagePath.share} />
-                </TouchableOpacity>
               </View>
             </View>
-            <Text style={{...commonStyles.font12Regular,color:"#CE90FF"
-            }}>{item?.distance}</Text>
-             <View style={styles.usersIcon}>
-            <View style={{flexDirection: 'row'}}>
-              {[1, 2, 6, 7, 8].map((res, index) => {
+            <View style={{ flexDirection: "row", alignSelf: "center" }}>
+              {item?.images?.map((res, ind) => {
                 return (
-                  <Image
-                    source={index <= 2 ? ImagePath.user : ImagePath.userEmp}
-                    style={{marginRight: 4}}
-                  />
+                  <View
+                    style={{
+                      ...styles.dotsView,
+                      backgroundColor: activeDot == ind ? "#fff" : "grey",
+                    }}
+                  ></View>
                 );
               })}
-              <Text
-                style={{
-                  ...commonStyles.font10GreyMedium,
-                  color: Colors?.greyText,
-                }}>
-                3 going, 2 available
-              </Text>
             </View>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <Text style={styles.friendsText}>Friends going:</Text>
-              <Image source={ImagePath.profileImg1} style={{...styles.userImg}} />
-              <Image source={ImagePath.profileImg1} style={{...styles.userImg,borderWidth:1,borderColor:'#fff',marginLeft:-12,width: moderateScale(23),
-    height: moderateScale(23),}} />
-            </View>
-          </View>
-            <View style={{flexDirection:"row",}}>
-            <View style={{flexDirection: 'row', marginVertical: 6}}>
-            {['Poker', 'Card game'].map((res, index) => {
+          </BlurView>
+          <Carousel
+            data={item?.images}
+            autoplay
+            loop
+            onSnapToItem={(index) => {
+              setactiveDot(index);
+            }}
+            renderItem={(data) => {
               return (
-                <View style={styles.tagsView}>
-                  <Text style={styles.tagsText}>{res}</Text>
+                <FastImage source={data?.item} style={styles.crauselImage} />
+              );
+            }}
+            sliderWidth={width}
+            itemWidth={width}
+          />
+        </View>
+
+        <View
+          style={{
+            paddingHorizontal: moderateScaleVertical(35),
+            paddingVertical: moderateScaleVertical(14),
+          }}
+        >
+          <Text style={styles.abuteText}>About</Text>
+          <Text
+            numberOfLines={!isShowMore ? 3 : undefined}
+            style={{ ...commonStyles.font12Regular, marginTop: 16 }}
+          >
+            A Multimedia Specialist with multiple years of experience through
+            professional work, coursework, and local organizations. A Multimedia
+            Specialist with multiple years of experience through professional
+            work, coursework, and local organizations A Multimedia Specialist
+            with multiple years of experience through professional work,
+            coursework, and local organizations A Multimedia Specialist with
+            multiple years of experience through professional work, coursework,
+            and local organizations
+          </Text>
+          <Text
+            onPress={() => {
+              setIsShowMore(!isShowMore);
+            }}
+            style={{ color: "#FF8400" }}
+          >
+            {isShowMore ? "Show Less" : `Show More`}
+          </Text>
+        </View>
+        <View style={styles.lineView} />
+        <View style={styles.sectionView}>
+          <Text style={{ ...commonStyles.font14BlackBold }}>Intention</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              marginBottom: 16,
+              marginTop: 12,
+            }}
+          >
+            {["Hiring", "Happy to mentor others"]?.map((res, index) => {
+              return (
+                <View
+                  key={index}
+                  style={{
+                    borderWidth: 1,
+                    marginRight: 8,
+                    borderColor: Colors?.borderColor6EA,
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    borderRadius: 5,
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      ...commonStyles.font11BlackBold,
+                      color: "#7C7C7C",
+                    }}
+                  >
+                    {res}
+                  </Text>
                 </View>
               );
             })}
           </View>
-            </View>
-            <View style={styles.line} />
-            <Text style={{...commonStyles.font13Regular}}>Language</Text>
-          <Text style={{...commonStyles.font11GreyMedium}}>English</Text>
-          <Text style={{...commonStyles.font11Regular, marginVertical: 16}}>
-            Just came to Seattle and hoping to make friends with people who also
-            like playing Poker! Welcome to join the Poker event!
+          <Text style={{ ...commonStyles.font14BlackBold }}>
+            Interest Industries
           </Text>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              marginBottom: 16,
+              marginTop: 12,
+            }}
+          >
+            {[
+              { name: "Venture Capital", image: ImagePath.venture },
+              { name: "Consulting", image: ImagePath.consulting },
+              { name: "University/ Student", image: ImagePath.university },
+            ]?.map((res, index) => {
+              return (
+                <View
+                  key={index}
+                  style={{
+                    borderWidth: 1,
+                    marginRight: 8,
+                    borderColor: Colors?.borderColor6EA,
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    borderRadius: 5,
+                    marginBottom: 8,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <FastImage source={res?.image} />
+                  <Text
+                    style={{
+                      ...commonStyles.font12Regular,
+                      color: Colors?.black,
+                      marginLeft: 6,
+                    }}
+                  >
+                    {res?.name}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+          <Text style={{ ...commonStyles.font14BlackBold }}>Expertise</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              marginTop: 12,
+            }}
+          >
+            {[
+              { name: "Product", bg: "#C2D9F4", textColor: "#5A99E2" },
+              { name: "Designg", bg: "#F7D5BD", textColor: "#656363" },
+            ]?.map((res, index) => {
+              return (
+                <View
+                  key={index}
+                  style={{
+                    borderWidth: 1,
+                    marginRight: 8,
+                    borderColor: res?.textColor,
+                    paddingHorizontal: 12,
+                    paddingVertical: 4,
+                    borderRadius: 5,
+                    marginBottom: 8,
+                    flexDirection: "row",
+                    backgroundColor: res?.bg,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      ...commonStyles.font12BlackBold,
+                      color: res?.textColor,
+                      marginLeft: 6,
+                    }}
+                  >
+                    {res?.name}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+        <View style={styles.lineView} />
+        <View
+          style={{
+            paddingHorizontal: 35,
+            paddingVertical: 22,
+            marginBottom: 16,
+          }}
+        >
+          <Text style={{ ...commonStyles.font14BlackBold }}>Education</Text>
+          <View style={{ flexDirection: "row", marginTop: 16 }}>
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                backgroundColor: "#FDF9F0",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <FastImage source={ImagePath?.education} />
+            </View>
+            <View style={{ marginLeft: 32 }}>
+              <Text style={{ ...commonStyles.font14BlackBold }}>
+                Bachelor of Arts
+              </Text>
+              <Text style={{ ...commonStyles?.font14Regular }}>
+                Rollins College 2012 - 2016
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.lineView} />
+        <View style={styles.sectionView}>
+          <Text style={{ ...commonStyles.font14BlackBold }}>Intention</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.scrollViewWrap}
+          >
+            {[
+              { heading: "Pronoun", desc: "She/ her", image: ImagePath.sheHer },
+              {
+                heading: "Location",
+                desc: "Irvine",
+                image: ImagePath.building,
+              },
+              { heading: "Language", desc: " English", image: ImagePath.lang },
+            ]?.map((res, index) => {
+              return (
+                <View key={index} style={styles.scrollWrapInnerView}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingHorizontal: 8,
+                    }}
+                  >
+                    <FastImage
+                      source={res?.image}
+                      style={index == 1 ? { width: 28, height: 28 } : {}}
+                    />
+                    <View
+                      style={{
+                        marginLeft: 24,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          ...commonStyles.font14BlackMedium,
+                        }}
+                      >
+                        {res?.heading}
+                      </Text>
+                      <Text
+                        style={{
+                          ...commonStyles.font14Regular,
+                        }}
+                      >
+                        {res?.desc}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+        <View style={{ height: 1, backgroundColor: "#DADADA" }} />
 
-          <View style={styles.BottoBtns}>
-          <TouchableOpacity onPress={()=>setisReportVisible(true)} style={{alignItems:'center',justifyContent:'center',alignSelf:'center'}}>
-            <Image source={ImagePath.reportIconNew}/>
+        <View style={styles.BottoBtns}>
+          <TouchableOpacity
+            onPress={() => setisReportVisible(true)}
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              alignSelf: "center",
+            }}
+          >
+            <FastImage source={ImagePath.reportIconNew} />
             <Text>Report</Text>
           </TouchableOpacity>
         </View>
-  </ScrollView>
-  </View>
-}
+      </ScrollView>
+    </View>
+  );
+};
 export default CardsPost;
 
 const styles = StyleSheet.create({
-  cardImage: {
-    height: moderateScale(20),
-    width: moderateScale(14),
-    paddingLeft: moderateScale(20),
-    position: 'absolute',
-    bottom: moderateScale(1),
-    left: moderateScale(57),
-    zIndex: 1,
-  },
-  likeCommentView: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: moderateScaleVertical(6),
-  },
-  commentStyle: {
-    marginHorizontal: moderateScale(12),
-    // height:moderateScaleVertical(24)
-  },
-  tagedNameText: {
-    ...commonStyles.font12Regular,
-  },
-  textPost: {
-    ...commonStyles.font13Regular,
-    marginBottom: moderateScaleVertical(8),
-    color: Colors.appBlack,
-  },
-  nameText: {
-    ...commonStyles.font14BlackBold,
-    color: Colors.appBlack,
-  },
-  locationText: {
-    ...commonStyles.font12grey,
-    maxWidth: moderateScale(180),
-  },
-  nameView: {
-    marginLeft: moderateScale(12),
-  },
-  profileOuter: {
-    borderRadius: 40,
-    height: moderateScale(42),
-    width: moderateScale(42),
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderColor: Colors.white,
-  },
-  profilePicView: {
-    alignItems: 'center',
-  },
-  profileImage: {
-    height: moderateScale(40),
-    width: moderateScale(40),
-    borderRadius: 40,
+  absolute: {
+    width: "100%",
+    flex: 1,
+    paddingVertical: 8,
+    zIndex: 10000,
+    position: "absolute",
+    bottom: 0,
   },
   cardContainer: {
-    ...commonStyles.shadowStyle,
-    marginVertical: moderateScaleVertical(10),
-    padding: moderateScale(12),
-    paddingHorizontal: moderateScale(8),
     borderBottomWidth: 1,
     borderBottomColor: Colors.greyButtons,
-    marginHorizontal: 16,
-    borderRadius: 16,
-    height: height * 0.9,
-    // height:700
-  },
-  cardProfileView: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  postImg: {
-    height: moderateScaleVertical(220),
-    width: '100%',
-    borderRadius: 8,
-    marginVertical: moderateScaleVertical(12),
-  },
-  imageView: {
-    overflow: 'hidden',
-  },
-  tagedPeopleView: {
-    paddingHorizontal: moderateScale(4),
-    paddingVertical: moderateScaleVertical(4),
-    borderRadius: 8,
-    backgroundColor: Colors.darkGrey,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: moderateScaleVertical(10),
-  },
-  toolTipStyling: {
-    height: moderateScale(126),
-    width: '100%',
-    backgroundColor: Colors.white,
-    marginLeft: moderateScale(40),
-    borderRadius: 8,
-    marginTop: moderateScaleVertical(30),
-    justifyContent: 'space-around',
-    padding: 16,
-    shadowColor: Colors.black,
-    shadowOffset: {width: 0, height: moderateScale(10)},
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  tooltipText: {
-    ...commonStyles.font12Regular,
-    color: Colors.appBlack,
+    height: height,
   },
   images: {
     borderTopRightRadius: 12,
     borderTopLeftRadius: 12,
     height: moderateScale(280),
-    width: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    resizeMode: "cover",
   },
   userImg: {
     width: moderateScale(25),
     height: moderateScale(25),
     borderRadius: moderateScale(50),
   },
-  usersIcon: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  friendsText: {
-    ...commonStyles.font10GreyMedium,
-    color: Colors?.greyText,
-    marginRight: moderateScaleVertical(8),
-  },
-  tagsView: {
-    borderWidth: 1,
-    marginRight: moderateScaleVertical(16),
-    borderColor: Colors.borderColor1,
-    paddingHorizontal: moderateScaleVertical(12),
-    paddingVertical: 2,
-    borderRadius: moderateScale(10),
-  },
-  tagsText: {
-    ...commonStyles.font10Regular,
-    color: Colors.greyText,
-  },
-  line: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderColor1,
-    marginVertical: moderateScaleVertical(16),
-  },
-  likeView: {
-    flexDirection: 'row',
-    marginRight: moderateScaleVertical(16),
-    alignItems: 'center',
-  },
-  likeText: {...commonStyles.font11GreyMedium, marginLeft: 4},
   BottoBtns: {
     paddingHorizontal: moderateScaleVertical(16),
     borderTopColor: Colors.borderColor1,
     paddingVertical: 16,
-    marginBottom:250,
-    alignItems: 'center',
+    marginBottom: 300,
+    alignItems: "center",
   },
-  bottomLefView: {
-    width: '50%',
-    height: moderateScaleVertical(37),
-    borderRadius: moderateScale(20),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F2F2F2',
+  userImg: {
+    width: moderateScale(25),
+    height: moderateScale(25),
+    borderRadius: moderateScale(50),
+  },
+  blurInsideView: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+  },
+  blurUserName: {
+    ...commonStyles?.font24BlackBold,
+    color: Colors?.white,
+  },
+  blurDesc: { ...commonStyles.font14Black, color: Colors?.white },
+  blurManualText: { ...commonStyles.font12White, color: Colors?.white },
+  images: {
+    borderWidth: 1,
+    borderColor: "#fff",
+    marginLeft: -12,
+    width: moderateScale(23),
+    height: moderateScale(23),
+  },
+  dotsView: {
+    width: 8,
+    height: 8,
+    marginHorizontal: 5,
+    borderRadius: 5,
+  },
+  crauselImage: { height: moderateScale(467), width: "100%" },
+  abuteText: { ...commonStyles?.font14Regular, color: "#7C7C7C" },
+  lineView: { height: 11, backgroundColor: "#DADADA" },
+  sectionView: { paddingHorizontal: 35, paddingVertical: 22 },
+  scrollViewWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 16,
+    marginTop: 12,
+  },
+  scrollWrapInnerView: {
+    borderWidth: 1,
+    marginRight: 16,
+    borderColor: Colors?.borderColor6EA,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 5,
+    marginBottom: 8,
   },
 });

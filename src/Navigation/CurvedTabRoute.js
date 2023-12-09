@@ -87,7 +87,6 @@ const CurvedTabRoute = (props) => {
         borderTopLeftRight
         screenOptions={{headerShown:false,}}
         renderCircle={({ selectedTab, navigate }) => {
-            console.log(selectedTab,"selectedTabooo");
             return(
           <Animated.View style={{...styles.btnCircleUp}}>
             <TouchableOpacity

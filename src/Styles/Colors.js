@@ -38,5 +38,6 @@ export default {
   borderColor:'#EFF0F0',
   gray7C:'#7C7C7C',
   pink:'#CE90FF',
-  cardGrey:'#F6F6F6'
+  cardGrey:'#F6F6F6',
+  borderColor6EA:'#E4E6EA'
 };

@@ -70,6 +70,7 @@ const RangeSliderComponent = ({
   };
   return (
     <View>
+      
       <MultiSlider
         isMarkersSeparated={true}
         allowOverlap={true}

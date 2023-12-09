@@ -1,164 +1,107 @@
+import React, { useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
   Image,
-  FlatList,
+  Pressable,
+  ScrollView,
   StyleSheet,
+  Text,
   TextInput,
-} from 'react-native';
-import React, {useRef, useState} from 'react';
-import WrapperContainer from '../../Components/WrapperContainer';
-import Colors from '../../Styles/Colors';
-import Modal from 'react-native-modal'
-import commonStyles from '../../Styles/commonStyles';
-import Header from '../../Components/Header';
-import ImagePath from '../../Constants/ImagePath';
-import ButtonComp from '../../Components/ButtonComp';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import MapView, {Marker} from 'react-native-maps';
-import ImagePicker from 'react-native-image-crop-picker';
-import * as Animatable from 'react-native-animatable';
+  TouchableOpacity,
+  View
+} from "react-native";
+import * as Animatable from "react-native-animatable";
+import ImagePicker from "react-native-image-crop-picker";
+import MapView, { Marker } from "react-native-maps";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import Header from "../../Components/Header";
+import ImagePath from "../../Constants/ImagePath";
+import Colors from "../../Styles/Colors";
+import commonStyles from "../../Styles/commonStyles";
 
+import moment from "moment";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import LinearGradient from "react-native-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useSelector } from "react-redux";
+import CalanderModal from "../../Components/CalanderModal";
+import CommonModal from "../../Components/CommonModal";
+import DropdownSelector from "../../Components/DropdownSelector";
+import GradientButton from "../../Components/GradientButton";
+import GradientView from "../../Components/GradientView";
+import SelectAgeModal from "../../Components/SelectAgeModal";
+import Slider from "../../Components/Slider";
+import UploadImageOptionSheet from "../../Components/UploadImageOptionSheet";
 import {
-  height,
-  moderateScale,
-  moderateScaleVertical,
-  width,
-} from '../../Styles/responsiveSize';
-import StepIndicator from 'react-native-step-indicator';
-import CalanderModal from '../../Components/CalanderModal';
-import NumberOfPeopleModal from '../../Components/CommonModal';
-import CommonModal from '../../Components/CommonModal';
-import moment from 'moment';
-import {useSelector} from 'react-redux';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import UploadImageOptionSheet from '../../Components/UploadImageOptionSheet';
-import NavigationStrings from '../../Constants/NavigationStrings';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import SelectTimeRangeModal from '../../Components/SelectTimeRangeModal';
-import SelectAgeModal from '../../Components/SelectAgeModal';
-export default function PostEventScreen({navigation}) {
-  const locationInfo = useSelector(data => data?.location?.locationInfo);
+  width
+} from "../../Styles/responsiveSize";
+import ProgressBar from "./ProgressBar";
+export default function PostEventScreen({ navigation }) {
+  const locationInfo = useSelector((data) => data?.location?.locationInfo);
 
-  const markerRef = useRef(null);
-  const [imagesData, setimagesData] = useState([])
-  const [isTimeModalVisible, setisTimeModalVisible] = useState(false)
-  const [startTime, setstartTime] = useState('')
-  const [endTime, setendTime] = useState('')
+  const [imagesData, setimagesData] = useState([]);
+  const [postImage, setpostImage] = useState("");
+  const [eventName, seteventName] = useState("");
+  const [startTime, setstartTime] = useState(moment().format("HH:MM A"));
+  const [endTime, setendTime] = useState(moment().add(4,'hour').format("HH:MM A"));
 
   const [state, setState] = useState({
     selectedLat: locationInfo?.coords?.latitude,
     selectedLng: locationInfo?.coords?.longitude,
-    searchedLocation: '',
+    searchedLocation: "",
     isLoading: false,
-    locationDetails: '',
+    locationDetails: "",
   });
   const {
-    isLoading,
-    searchedLocation,
     selectedLng,
     selectedLat,
-    locationDetails,
   } = state;
-  const updateState = data => setState(state => ({...state, ...data}));
-  const [isReadyToCreate, setisReadyToCreate] = useState(false);
-  const [currentPossition, setcurrentPossition] = useState(0);
+  const updateState = (data) => setState((state) => ({ ...state, ...data }));
   const [isDateModalVisible, setisDateModalVisible] = useState(false);
-  const [activeCat, setactiveCat] = useState(0);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [isPeopleModalVisible, setisPeopleModalVisible] = useState(false);
-  const [numberPeople, setnumberPeople] = useState(0);
-  const [contentType, setcontentType] = useState(1);
-  const [Gender, setGender] = useState('');
-  const [langType, setlangType] = useState('');
-  const [time, settime] = useState('');
-  const [dateRange, setdateRange] = useState('');
+  const [dateRange, setdateRange] = useState("");
   const [isModalSheetVisible, setisModalSheetVisible] = useState(false);
-  const [animateClassName, setanimateClassName] = useState('slideInRight')
-  const [minAge, setminAge] = useState('')
-  const [maxAge, setmaxAge] = useState('')
-  const [isAgeModalVisible, setisAgeModalVisible] = useState(false)
+  const [animateClassName, setanimateClassName] = useState("slideInRight");
+  const [minAge, setminAge] = useState("");
+  const [maxAge, setmaxAge] = useState("");
+  const [isAgeModalVisible, setisAgeModalVisible] = useState(false);
+  const [startTimeSeleted, setstartTimeSeleted] = useState(false)
+  const [endTimeSelected, setEndTimeSelected] = useState(false)
+  const [isSelectedModeDate, setIsSelectedModeDate] = useState(false)
+  const [calMode, setcalMode] = useState('time')
+  const [date, setdate] = useState(moment()?.format("dddd, MMMM YYYY"))
 
-  const [age, setage] = useState(0);
-  const [isAge, setisAge] = useState(false);
-
-  const [activeType, setactiveType] = useState(-1);
-  const [typeData, settypeData] = useState([
-    {
-      image: ImagePath.gameIcon,
-      name: 'Card',
-    },
-    {
-      image: ImagePath.sports,
-      name: 'Sport',
-    },
-    {
-      image: ImagePath.music,
-      name: 'Music',
-    },
-    {
-      image: ImagePath.outdoorFilter,
-      name: 'Outdoor',
-    },
-    {
-      image: ImagePath.travel,
-      name: 'Travel',
-    },
-    {
-      image: ImagePath.lifeIcon,
-      name: 'Life',
-    },
-    {
-      image: ImagePath.platteFilter,
-      name: 'Arts',
-    },
-    {
-      image: ImagePath.petIcon,
-      name: 'Pets',
-    },
-    {
-      image: ImagePath.Group,
-      name: 'Jobs',
-    },
-    {
-      image: ImagePath.otherIcon,
-      name: 'Others',
-    },
-  ]);
-  const customStyles = {
-    stepIndicatorSize: 25,
-    currentStepIndicatorSize: 25,
-    separatorStrokeWidth: 2,
-    currentStepStrokeWidth: 2,
-    stepStrokeCurrentColor: '#fe7013',
-    stepStrokeWidth: 2,
-    stepStrokeFinishedColor: '#fe7013',
-    stepStrokeUnFinishedColor: '#D9D9D9',
-    separatorFinishedColor: '#fe7013',
-    separatorUnFinishedColor: '#D9D9D9',
-    stepIndicatorFinishedColor: '#fe7013',
-    stepIndicatorUnFinishedColor: '#ffffff',
-    stepIndicatorCurrentColor: '#ffffff',
-  };
-  const [categoryType, setcategoryType] = useState([
-    'All',
-    'Cat/ Dog Walking',
-    'Pet Sitting',
-    'Others',
-  ]);
+ 
+  
   const hideDatePicker = () => {
     setDatePickerVisibility(false);
   };
-  const handleConfirm = date => {
-    console.warn('A date has been picked: ', date);
-    settime(moment(date).format('HH:MM'));
-    hideDatePicker();
+  const handleConfirm = (date) => {
+    if(startTimeSeleted)
+    {
+      setstartTime(moment(date).format("HH:MM A"))
+      hideDatePicker();
+      setstartTimeSeleted(false)
+      return
+    }
+    if(endTimeSelected)
+    {
+      setendTime(moment(date).format("HH:MM A"))
+      hideDatePicker();
+      setEndTimeSelected(false)
+      return
+    }
+    if(isSelectedModeDate)
+    {
+      setdate(moment(date).format("dddd, MMMM YYYY"))
+      hideDatePicker();
+      setIsSelectedModeDate(false)
+      return
+    }
   };
   const getLocationName = async () => {
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLat}&lon=${selectedLng}`,
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLat}&lon=${selectedLng}`
       );
       const data = await response.json();
       // console.log(data,"datatatat");
@@ -171,596 +114,778 @@ export default function PostEventScreen({navigation}) {
         searchedLocation: locationName,
         locationDetails: locationCity,
       });
-      console.log(locationName, 'locationaaaNamelocationName');
+      console.log(locationName, "locationaaaNamelocationName");
       //  markerRef.current.
       // return locationName;
     } catch (error) {
-      console.error('Error fetching location name:', error);
-      return 'Unknown Location';
+      console.error("Error fetching location name:", error);
+      return "Unknown Location";
     }
   };
-
-  const onGallery=()=>{
+  
+  const onGallery = () => {
     ImagePicker.openPicker({
       width: 300,
       height: 400,
-      cropping: true
-    }).then(image => {
-      setisModalSheetVisible(false)
-      let data=[...imagesData]
-      data.push(image.path)
-      setimagesData(data)
+      cropping: true,
+    }).then((image) => {
+      setpostImage(image.path);
+      setisModalSheetVisible(false);
+      let data = [...imagesData];
+      data.push(image.path);
+      setimagesData(data);
       console.log(image);
     });
-  }
-  const onCamera=()=>{
-    setisModalSheetVisible(false)
+  };
+  const onCamera = () => {
+    setisModalSheetVisible(false);
     ImagePicker.openCamera({
       width: 300,
       height: 400,
       cropping: true,
-    }).then(image => {
-      setisModalSheetVisible(false)
-      let data=[...imagesData]
-      data.push(image.path)
-      setimagesData(data)
+    }).then((image) => {
+      setisModalSheetVisible(false);
+      let data = [...imagesData];
+      data.push(image.path);
+      setimagesData(data);
       console.log(image);
     });
-  }
+  };
+  const [currentStep, setCurrentStep] = useState(1);
+
+  const handleStepPress = (step) => {
+    setCurrentStep(step);
+  };
+  const [eventType, setEventType] = useState(1);
+  const [selectedGen, setselectedGen] = useState("Evryone");
+  const [lang, setlang] = useState("English");
+  const [guest, setguest] = useState(1);
+  const chandigarhMarkers = [
+    { id: 1, title: 'Marker 1', coordinate: { latitude: 30.7333, longitude: 76.7794 } },
+    { id: 2, title: 'Marker 2', coordinate: { latitude: 30.7122, longitude: 76.7684 } },
+    { id: 3, title: 'Marker 3', coordinate: { latitude: 30.7278, longitude: 76.7971 } },
+    { id: 4, title: 'Marker 4', coordinate: { latitude: 30.7069, longitude: 76.8104 } },
+    { id: 6, title: 'Marker 6', coordinate: { latitude: 30.7500, longitude: 76.800 } },
+    // Add more markers as needed
+  ];
   return (
-    // <WrapperContainer bgColor={Colors.white} statusBarColor={Colors.white}>
-    <View style={{flex:1,backgroundColor:Colors.white}}>
+    <View style={{ flex: 1, backgroundColor: Colors.white }}>
       <KeyboardAwareScrollView
-        contentContainerStyle={{flexGrow: 1}}
-        showsVerticalScrollIndicator={false}>
-          <SafeAreaView style={{flex:1,backgroundColor:Colors.white}}>
-        <Animatable.View animation={animateClassName} duration={100} style={{flex:1,backgroundColor:Colors.white}}>
-        {isReadyToCreate ? (
-          <View style={{flex: 1}}>
-            <Header
-              showLeft={
-                currentPossition == 0 ? ImagePath.close : ImagePath.backBtn
-              }
-              headerTextStyle={{...commonStyles.font30Italic}}
-              onPressLeft={() => {
-                if (!!currentPossition) {
-                  setanimateClassName('slideInLeft')
-                  setcurrentPossition(currentPossition - 1);
-                } else {
-                  setisReadyToCreate(false);
-                }
-              }}
-            />
-            <View style={{flex: 1}}>
-              <Text
-                style={{
-                  ...commonStyles.font20Medium,
-                  textAlign: 'center',
-                  marginVertical: 16,
-                }}>
-                {currentPossition == 0
-                  ? 'Choose your event type'
-                  : currentPossition == 1
-                  ? 'What is your event basics'
-                  : currentPossition == 2
-                  ? 'Where is your event located?'
-                  : 'Give your event title &\ndescription'}
-              </Text>
-              <StepIndicator
-                customStyles={customStyles}
-                stepCount={4}
-                renderStepIndicator={evet => {
-                  return (
-                    <TouchableOpacity
-                      onPress={() => setcurrentPossition(evet?.position)}>
-                      {evet?.stepStatus == 'finished' ? (
-                        <Image source={ImagePath.checkWhite} />
-                      ) : (
+        contentContainerStyle={{ flexGrow: 1 }}
+        extraHeight={200}
+        showsVerticalScrollIndicator={false}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.white }}>
+          <View style={{ marginBottom: 8 }}>
+            {currentStep == 3 ? (
+              <View style={{ flexDirection: "row", marginLeft: 16 }}>
+                <TouchableOpacity
+                  onPress={() => handleStepPress(currentStep - 1)}
+                >
+                  <Image source={ImagePath.backBtn} />
+                </TouchableOpacity>
+                <View style={{ flexDirection: "row", marginLeft: 34 }}>
+                  {[
+                    { name: "Cafes", image: ImagePath.cup },
+                    { name: "Restaurants", image: ImagePath.plat },
+                  ]?.map((res, index) => {
+                    return (
+                      <LinearGradient
+                        start={{ x: 0, y: 1 }}
+                        end={{ x: 0, y: 0.4 }}
+                        colors={
+                          eventType == index + 1
+                            ? ["#FFC634", "#FF8400"]
+                            : ["#EFF0F0", "#EFF0F0"]
+                        }
+                        style={{
+                          marginRight: 8,
+                          flexDirection: "row",
+                          height: 26,
+                          paddingHorizontal: 5,
+                          borderRadius: 5,
+                          alignItems: "center",
+                        }}
+                      >
+                        <Image
+                          source={res?.image}
+                          style={{
+                            width: 15,
+                            height: 15,
+                            resizeMode: "contain",
+                            tintColor:
+                              eventType == index + 1 ? "#fff" : "#656363",
+                          }}
+                        />
                         <Text
                           style={{
-                            ...commonStyles.font11Regular,
-                            color: Colors.appColorPrimary,
-                          }}>
-                          {evet?.position + 1}
+                            ...commonStyles?.font12BlackBold,
+                            marginLeft: 6,
+                            color: eventType == index + 1 ? "#fff" : "#656363",
+                          }}
+                        >
+                          {res?.name}
                         </Text>
-                      )}
-                    </TouchableOpacity>
-                  );
+                      </LinearGradient>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : (
+              <Header
+                showLeft={ImagePath.backBtn}
+                headerTextStyle={{ ...commonStyles.font30Italic }}
+                onPressLeft={() => {
+                  if(currentStep==1)
+                  {
+                    navigation.goBack()
+                    return
+                  }
+                  handleStepPress(currentStep - 1);
                 }}
-                currentPosition={currentPossition}
               />
-              {currentPossition == 0 && (
-                <Animatable.View
-                animation={animateClassName}
-                duration={500}
-                  style={{
-                    //   width: width - 32,
-                    marginTop: 80,
-                  }}>
-                  <FlatList
-                    data={typeData}
-                    numColumns={5}
-                    disableVirtualization={true}
-                    contentContainerStyle={{
-                      paddingHorizontal: 16,
-                      marginTop: 16,
-                      paddingRight: 32,
-                    }}
-                    columnWrapperStyle={{justifyContent: 'space-between'}}
-                    renderItem={({item, index}) => {
-                      return (
-                        <TouchableOpacity
-                          onPress={() => {
-                            setactiveType(index);
-                          }}
-                          style={{
-                            width: 60,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            marginBottom: 28,
-                          }}>
-                          <View>
-                            <View
-                              style={{
-                                width: 54,
-                                height: 54,
-                                backgroundColor:
-                                  activeType == index ? '#EFF0F0' : null,
-                                borderRadius: 50,
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                overflow: 'visible',
-                              }}>
-                              <Image
-                                source={item?.image}
-                                style={{
-                                  marginTop: activeType == index ? -16 : 0,
-                                  width: activeType == index ? 48 : 37,
-                                  height: activeType == index ? 57 : 37,
-                                  resizeMode: 'contain',
-                                  tintColor:
-                                    activeType == index
-                                      ? Colors.appColorPrimary
-                                      : '#FF840080',
-                                }}
-                              />
-                            </View>
-                          </View>
-                          <Text
-                            style={{
-                              ...commonStyles.font11Regular,
-                              marginTop: 8,
-                              color:
-                                activeType == index
-                                  ? Colors.appColorPrimary
-                                  : Colors?.ABABAB,
-                            }}>
-                            {item?.name}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    }}
-                  />
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      paddingHorizontal: moderateScaleVertical(40),
-                      marginTop: moderateScale(108),
-                    }}>
-                    {categoryType?.map((res, index) => {
-                      return (
-                        <TouchableOpacity
-                          onPress={() => {
-                            setactiveCat(index);
-                          }}
-                          key={index}
-                          style={{
-                            borderWidth: activeCat == index ? 1 : 0,
-                            borderRadius: moderateScale(5),
-                            paddingVertical: 1,
-                            paddingHorizontal: moderateScaleVertical(10),
-                            backgroundColor:
-                              activeCat == index
-                                ? 'rgba(255, 132, 0, 0.50)'
-                                : Colors?.borderColor,
-                            borderColor:
-                              activeCat == index
-                                ? Colors?.appColorPrimary
-                                : Colors?.borderColor,
-                          }}>
-                          <Text
-                            style={{
-                              ...commonStyles.font10Grey,
-                              color:
-                                activeCat == index
-                                  ? Colors?.white
-                                  : Colors?.greyText,
-                            }}>
-                            {res}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </Animatable.View>
-              )}
-              {currentPossition == 1 && (
-                <Animatable.View
-                animation={animateClassName}
-                duration={500}
-                  style={{
-                    //   width: width - 32,
-                    marginTop: moderateScaleVertical(120),
-                  }}>
-                  <View style={styles.listView}>
-                    <Text style={styles?.listText}>Date</Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setisDateModalVisible(true);
-                      }}>
-                      <Text style={styles?.listText}>
-                        {!!dateRange ? dateRange : `Any date`}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={{...styles.listView, marginTop: 18}}>
-                    <Text style={styles?.listText}>Time</Text>
-                    <TouchableOpacity
-                      onPress={() => setisTimeModalVisible(true)}>
-                      <Text style={styles?.listText}>
-                        {(!!startTime&& !!endTime) ? `${startTime} To ${endTime}` : `Any time `}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={{...styles.listView, marginTop: 18}}>
-                    <Text style={styles?.listText}># of people</Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setcontentType(1);
-                        setisPeopleModalVisible(true);
-                      }}>
-                      <Text style={styles?.listText}>
-                        {!!numberPeople ? numberPeople : `Any number`}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={{...styles.listView, marginTop: 18}}>
-                    <Text style={styles?.listText}>{`Age`}</Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        // setcontentType(2);
-                        // setisPeopleModalVisible(true);
-                        setisAgeModalVisible(true)
-                      }}>
-                      <Text style={styles?.listText}>
-                        {(!!minAge && !!maxAge) ? `${minAge} yrs to ${maxAge} yrs` : `Any age`}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={{...styles.listView, marginTop: 18}}>
-                    <Text style={styles?.listText}>Gender </Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setcontentType(3);
-                        setisPeopleModalVisible(true);
-                      }}>
-                      <Text style={styles?.listText}>
-                        {!!Gender ? Gender : `Any one`}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={{...styles.listView, marginTop: 18}}>
-                    <Text style={styles?.listText}>Event language</Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setcontentType(4);
-                        setisPeopleModalVisible(true);
-                      }}>
-                      <Text style={styles?.listText}>
-                        {!!langType ? langType : `Any language`}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </Animatable.View>
-              )}
-              {currentPossition == 2 && (
-                <Animatable.View
-                animation={animateClassName}
-                duration={500} style={{marginTop: 16, flex: 1}}>
-                  <MapView
-                    //provider={PROVIDER_GOOGLE} // remove if not using Google Maps
-                    style={{
-                      ...styles.map,
-                      alignSelf: 'center',
-                      //  overflow: 'hidden'
-                      width: '100%',
-                      zIndex: -100,
-                      flex: 1,
-                      // height: moderateScaleVertical(500),
-                    }}
-                    onRegionChangeComplete={e => {
-                      console.log(e, 'euwnfuwneufnewu'),
-                        updateState({
-                          selectedLat: e.latitude,
-                          selectedLng: e.longitude,
-                        });
-                      getLocationName();
-                      // updateState({selectedLat:e.latitude,selectedLng:e.longitude});
-                      // markerRef.current.setNativeProps({ title: locationDetails, description: searchedLocation });
-                    }}
-                    zoomEnabled={true}
-                    moveOnMarkerPress={true}
-                    //customMapStyle={{borderRadius:400,width:"100%",height:moderateScaleVertical(isKeyboardShown?140:400)}}
-                    region={{
-                      latitude: selectedLat,
-                      longitude: selectedLng,
-                      latitudeDelta: 0.015,
-                      longitudeDelta: 0.0121,
-                    }}>
-                    <Marker
-                      key={selectedLat}
-                      ref={ref => (markerRef.current = ref)}
-                      coordinate={{
-                        latitude: selectedLat,
-                        longitude: selectedLng,
-                      }}
-                      tappable={true}
-                      title={locationDetails}
-                      description={searchedLocation}
-                      tracksInfoWindowChanges={true}
-                      isPreselected={true}>
-                      <Image
-                        source={ImagePath.locationPin}
-                        style={{width: 44, height: 44, resizeMode: 'contain'}}
-                      />
-                    </Marker>
-                  </MapView>
-                  <View
-                    style={{
-                      flex: 0.5,
-                      backgroundColor: Colors.white,
-                      borderTopRightRadius: 20,
-                      borderTopLeftRadius: 20,
-                      marginTop: -20,
-                    }}>
-                    <View
-                      style={{
-                        height: 38,
-                        backgroundColor: '#F2F2F2',
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        paddingHorizontal: 16,
-                        alignItems: 'center',
-                        marginTop: 16,
-                        marginHorizontal: 18,
-                        borderRadius: 20,
-                      }}>
-                      <TextInput
-                        placeholder="Enter your location"
-                        style={{padding: 0}}
-                      />
-                      <Image source={ImagePath.searchIcon} />
-                    </View>
-                  </View>
-                </Animatable.View>
-              )}
-              {currentPossition == 3 && (
-                <Animatable.View
-                animation={animateClassName}
-                duration={500} style={{flex: 1}}>
-                  <View
-                    style={{
-                      height: moderateScale(300),
-                      borderWidth: 1,
-                      borderRadius: 20,
-                      borderColor: Colors.borderColor1,
-                      marginHorizontal: 24,
-                      marginTop: 80,
-                    }}>
-                    <View
-                      style={{
-                        height: 48,
-                        borderBottomWidth: 1,
-                        borderBlockColor: Colors.borderColor1,
-                        justifyContent: 'center',
-                        paddingHorizontal: 8,
-                      }}>
-                      <TextInput
-                        placeholder="Title"
-                        style={{...commonStyles.font13RedMedium}}
-                      />
-                    </View>
-                    <View style={{paddingHorizontal: 8, paddingTop: 8}}>
-                      <TextInput
-                        placeholder="Tell everyone about your event"
-                        tyle={{...commonStyles.font13RedMedium}}
-                      />
-                    </View>
-                  </View>
-                    {!!imagesData?.length && <View style={{paddingHorizontal:24,marginTop:24,flexDirection:'row',flexWrap:'wrap'}}>
-                      {imagesData?.map((res)=>{
-                        return(
-                          <Image source={{uri:res}} style={{width:104,height:128,borderRadius:10,marginRight:16,marginBottom:16}}/>
-                        )
-                      })}
-                      <TouchableOpacity onPress={()=>setisModalSheetVisible(true)} style={{width:104,justifyContent:'center',alignItems:'center',height:128,borderWidth:1,borderRadius:10,borderWidth:1,borderColor:Colors?.borderColor1}}>
-                      <Image source={ImagePath.addGrey}/>
-                      </TouchableOpacity>
-                    </View>}
-                  {!!imagesData?.length?<View style={{marginHorizontal:24,marginBottom:32,marginTop:16}}>
-                    <ButtonComp
-                    onPress={()=>navigation.navigate(NavigationStrings.HOME)}
-                    btnText='Post'
-                    />
-                  </View>:<TouchableOpacity
-                  onPress={()=>setisModalSheetVisible(true)}
-                    style={{
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexDirection: 'row',
-                      borderWidth: 1,
-                      height: 48,
-                      borderRadius: 20,
-                      marginHorizontal: 24,
-                      marginTop:!!imagesData?.length?24:80,
-                      borderColor: Colors.borderColor1,
-                      marginBottom:16
-                    }}>
-                    <Image source={ImagePath.gallery} />
-                    <Text
-                      style={{
-                        ...commonStyles.font15Black,
-                        marginLeft: 16,
-                        color: Colors.greyText,
-                      }}>
-                      Add photos
-                    </Text>
-                  </TouchableOpacity>}
-                </Animatable.View>
-              )}
-            </View>
+            )}
           </View>
-        ) : (
-          <View style={{flex: 1}}>
-            <Header
-              headerName={'发表'}
-              showLeft={ImagePath.close}
-              headerTextStyle={{...commonStyles.font30Italic}}
-            />
-            <View
-              style={{
-                flex: 0.7,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <Image
-                source={ImagePath.tutorial_img}
-                style={{width: width, resizeMode: 'stretch'}}
-              />
-            </View>
-            <View style={{flex: 0.3, paddingTop: 16}}>
-              <Text style={{...commonStyles.font30medium, textAlign: 'center'}}>
-                Ready to post an Event?
-              </Text>
-              <View style={{paddingHorizontal: 24, marginTop: 60}}>
-                <ButtonComp
-                  onPress={() => {
-                    setisReadyToCreate(true);
-                  }}
-                  btnText="Get Started"
-                />
+          {currentStep != 3 && (
+            <ProgressBar steps={3} currentStep={currentStep} />
+          )}
+          <Animatable.View
+            animation={animateClassName}
+            duration={100}
+            style={{ flex: 1, backgroundColor: Colors.white }}
+          >
+            <View style={{ flex: 1 }}>
+              <View style={{ flex: 1 }}>
+                {(currentStep == 1 || currentStep == 2) && (
+                  <Text
+                    style={{
+                      ...commonStyles.font22BlackBold,
+                      textAlign: "center",
+                      marginVertical: 16,
+                      color: "#000",
+                    }}
+                  >
+                    {currentStep == 1
+                      ? "Give your event title &\ndescription"
+                      : "What is your event basics"}
+                  </Text>
+                )}
+
+                {currentStep == 1 && (
+                  <Animatable.View
+                    animation={animateClassName}
+                    duration={500}
+                    style={{ flex: 1, paddingHorizontal: 32 }}
+                  >
+                    <Pressable
+                      onPress={() => setisModalSheetVisible(true)}
+                      style={{
+                        height: 200,
+                        marginBottom: 16,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Image
+                        source={
+                          postImage ? { uri: postImage } : ImagePath.galleryIcon
+                        }
+                        style={
+                          postImage
+                            ? {
+                                height: "100%",
+                                width: "100%",
+                                resizeMode: "cover",
+                                borderRadius: 5,
+                              }
+                            : {}
+                        }
+                      />
+                    </Pressable>
+                    <View style={{}}>
+                      <TextInput
+                        placeholder="Event Name"
+                        placeholderTextColor={"#656363"}
+                        onChangeText={seteventName}
+                        multiline
+                        style={{
+                          ...commonStyles?.font14BlackBold,
+                          alignSelf: "center",
+                          color: "#656363",
+                          padding: 0,
+                          margin: 0,
+                        }}
+                      />
+                    </View>
+                    <View
+                      style={{
+                        borderBottomWidth: 1,
+                        marginTop: 80,
+                        borderBottomColor: "#ABABAB",
+                      }}
+                    ></View>
+                    <View style={{ flex: 1 }} />
+                    <View>
+                      <GradientButton
+                        colors={
+                          !!eventName && !!postImage
+                            ? ["#FFC634", "#FF8400"]
+                            : ["#EFF0F0", "#EFF0F0"]
+                        }
+                        title="Next"
+                        customTextStyle={{
+                          color:
+                            !!eventName && !!postImage ? "#fff" : "#656363",
+                        }}
+                        onPress={() => {
+                          handleStepPress(currentStep + 1);
+
+                          if (!(!!eventName && !!postImage)) {
+                            return;
+                          }
+                          handleStepPress(currentStep + 1);
+                        }}
+                      />
+                    </View>
+                  </Animatable.View>
+                )}
+                {currentStep == 2 && (
+                  <Animatable.View
+                    animation={animateClassName}
+                    duration={500}
+                    style={{ marginTop: 16, flex: 1, paddingHorizontal: 32 }}
+                  >
+                    <View style={{}}>
+                      <Text
+                        style={{
+                          ...commonStyles.font14BlackMedium,
+                          color: "#656363",
+                        }}
+                      >
+                        Event Type <Text style={{ color: "#FF0000" }}>*</Text>
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        marginTop: 24,
+                        flexDirection: "row",
+                        justifyContent: "space-around",
+                      }}
+                    >
+                      <GradientView
+                        onPress={() => {
+                          setEventType(1);
+                        }}
+                        image={ImagePath.cup}
+                        eventType={1}
+                        colors={
+                          eventType == 1
+                            ? ["#FFC634", "#FF8400"]
+                            : ["#FF840033", "#FF840033"]
+                        }
+                        title={"Cafe"}
+                        customTextStyle={
+                          eventType == 1
+                            ? { ...commonStyles.font12BlackBold }
+                            : { ...commonStyles.font12Regular }
+                        }
+                      />
+                      <GradientView
+                        onPress={() => {
+                          setEventType(2);
+                        }}
+                        image={ImagePath.plat}
+                        eventType={2}
+                        colors={
+                          eventType == 2
+                            ? ["#FFC634", "#FF8400"]
+                            : ["#FF840033", "#FF840033"]
+                        }
+                        title={"Restaurant "}
+                        customTextStyle={
+                          eventType == 2
+                            ? { ...commonStyles.font12BlackBold }
+                            : { ...commonStyles.font12Regular }
+                        }
+                      />
+                    </View>
+                    <View style={{ flexDirection: "row", marginTop: 80 }}>
+                      <Image source={ImagePath.watch} />
+                      <View style={{ marginLeft: 16 }}>
+                        <View style={{flexDirection:'row'}}>
+                          <TouchableOpacity onPress={()=>{
+                            setDatePickerVisibility(true)
+                            setstartTimeSeleted(true)
+                            setcalMode('time')
+                          }}>
+                          <Text
+                          style={{
+                            ...commonStyles.font14BlackMedium,
+                            color: "#4D4F59",
+                          }}
+                        >
+                          {startTime}
+                        </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={()=>{
+                            setDatePickerVisibility(true)
+                            setEndTimeSelected(true)
+                            setcalMode('time')
+                          }}>
+                          <Text
+                          style={{
+                            ...commonStyles.font14BlackMedium,
+                            color: "#4D4F59",
+                          }}
+                        >
+                          {` - ${endTime}`}
+                          <Text style={{ color: "red" }}>*</Text>
+                        </Text>
+                          </TouchableOpacity>
+                          
+                        </View>
+                        <TouchableOpacity onPress={()=>{
+                            setDatePickerVisibility(true)
+                            setIsSelectedModeDate(true)
+                            setcalMode('date')
+                          }}>
+                       <Text
+                          style={{
+                            ...commonStyles.font14Regular,
+                            color: "#4D4F59",
+                          }}
+                        >
+                          {date}
+                        </Text>
+                       </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        marginTop: 24,
+                      }}
+                    >
+                      <View>
+                        <Text
+                          style={{
+                            ...commonStyles.font14BlackMedium,
+                            color: "#656363",
+                          }}
+                        >
+                          Guests
+                        </Text>
+                        <View
+                          style={{
+                            width: 90,
+                            height: 45,
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            paddingHorizontal: 8,
+                            backgroundColor: "#FAFAFA",
+                            borderWidth: 1,
+                            borderRadius: 5,
+                            borderColor: "#E6E6E8",
+                            marginTop: 8,
+                          }}
+                        >
+                          <TouchableOpacity
+                            onPress={() => {
+                              if (guest > 0) {
+                                setguest(guest - 1);
+                              }
+                            }}
+                            style={{
+                              width: 15,
+                              height: 15,
+                              backgroundColor: "#FF840080",
+                              borderRadius: 2,
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Text style={{ color: "#fff" }}>-</Text>
+                          </TouchableOpacity>
+                          <Text>{guest}</Text>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setguest(guest + 1);
+                            }}
+                            style={{
+                              width: 15,
+                              height: 15,
+                              backgroundColor: "#FF840080",
+                              borderRadius: 2,
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Text style={{ color: "#fff" }}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      <View style={{ flex: 1 }} />
+                      <View>
+                        <Text
+                          style={{
+                            ...commonStyles.font14BlackMedium,
+                            color: "#656363",
+                          }}
+                        >
+                          Gender
+                        </Text>
+                        <DropdownSelector
+                          data={["Male", "Female", "Evryone"]}
+                          selectedValue={selectedGen}
+                          getSelectValue={setselectedGen}
+                        />
+                      </View>
+                    </View>
+                    <View style={{ marginTop: 45 }}>
+                      <Slider />
+                    </View>
+                    <View style={{ marginTop: 34 }}>
+                      <Text
+                        style={{
+                          ...commonStyles.font14BlackMedium,
+                          color: "#656363",
+                        }}
+                      >
+                        Event Language
+                      </Text>
+                      <DropdownSelector
+                        data={["English", "Other"]}
+                        selectedValue={lang}
+                        customButtonStyle={{ width: width - 64 }}
+                        getSelectValue={setlang}
+                      />
+                    </View>
+                    <View style={{ marginTop: 34 }}>
+                      <Text
+                        style={{
+                          ...commonStyles.font14BlackMedium,
+                          color: "#656363",
+                          marginBottom: 8,
+                        }}
+                      >
+                        Event Descriptions{" "}
+                      </Text>
+                      <TextInput
+                        placeholder="Share your thoughts about the event"
+                        placeholderTextColor={"#ABABAB"}
+                        style={{
+                          ...commonStyles.font14Regular,
+                          borderWidth: 1,
+                          height: 44,
+                          paddingHorizontal: 20,
+                          borderRadius: 5,
+                          borderColor: "#E6E6E8",
+                          backgroundColor: "#FAFAFA",
+                        }}
+                      />
+                    </View>
+                    <View style={{ marginTop: 34 }}>
+                      <GradientButton
+                        colors={["#FFC634", "#FF8400"]}
+                        title="Post Your Event!"
+                        onPress={() => {
+                          handleStepPress(currentStep + 1);
+                        }}
+                      />
+                    </View>
+                  </Animatable.View>
+                )}
+                {currentStep == 3 && (
+                  <Animatable.View
+                    animation={animateClassName}
+                    duration={500}
+                    style={{ flex: 1 }}
+                  >
+                    <MapView
+                      //provider={PROVIDER_GOOGLE} // remove if not using Google Maps
+                      style={{
+                        ...styles.map,
+                        alignSelf: "center",
+                        //  overflow: 'hidden'
+                        width: "100%",
+                        zIndex: -100,
+                        flex: 1,
+                        // height: moderateScaleVertical(500),
+                      }}
+                      onRegionChangeComplete={(e) => {
+                        console.log(e, "euwnfuwneufnewu"),
+                          updateState({
+                            selectedLat: e.latitude,
+                            selectedLng: e.longitude,
+                          });
+                        getLocationName();
+                        // updateState({selectedLat:e.latitude,selectedLng:e.longitude});
+                        // markerRef.current.setNativeProps({ title: locationDetails, description: searchedLocation });
+                      }}
+                      zoomEnabled={true}
+                      moveOnMarkerPress={true}
+                      //customMapStyle={{borderRadius:400,width:"100%",height:moderateScaleVertical(isKeyboardShown?140:400)}}
+                      // region={{
+                      //   latitude: selectedLat,
+                      //   longitude: selectedLng,
+                      //   latitudeDelta: 0.015,
+                      //   longitudeDelta: 0.0121,
+                      // }}
+                      initialRegion={{
+                        latitude: 30.7333,
+                        longitude: 76.7794,
+                        latitudeDelta: 0.0922,
+                        longitudeDelta: 0.0421,
+                      }}
+                    >
+                      {chandigarhMarkers.map(marker => (
+          <Marker
+            key={marker.id}
+            coordinate={marker.coordinate}
+            title={marker.title}
+            tracksInfoWindowChanges={true}
+                        isPreselected={true}
+            description={`Latitude: ${marker.coordinate.latitude}, Longitude: ${marker.coordinate.longitude}`}
+          >
+            <Image
+                          source={ImagePath.locationPin}
+                          style={{
+                            width: 44,
+                            height: 44,
+                            resizeMode: "contain",
+                          }}
+                        />
+            </Marker>
+        ))}
+                      {/* <Marker
+                        key={selectedLat}
+                        ref={(ref) => (markerRef.current = ref)}
+                        coordinate={{
+                          latitude: selectedLat,
+                          longitude: selectedLng,
+                        }}
+                        tappable={true}
+                        title={locationDetails}
+                        description={searchedLocation}
+                        tracksInfoWindowChanges={true}
+                        isPreselected={true}
+                      >
+                        <Image
+                          source={ImagePath.locationPin}
+                          style={{
+                            width: 44,
+                            height: 44,
+                            resizeMode: "contain",
+                          }}
+                        />
+                      </Marker>
+                      <Marker
+                        key={selectedLat}
+                        ref={(ref) => (markerRef.current = ref)}
+                        coordinate={{
+                          latitude: selectedLat,
+                          longitude: selectedLng,
+                        }}
+                        tappable={true}
+                        title={locationDetails}
+                        description={searchedLocation}
+                        tracksInfoWindowChanges={true}
+                        isPreselected={true}
+                      >
+                        <Image
+                          source={ImagePath.locationPin}
+                          style={{
+                            width: 44,
+                            height: 44,
+                            resizeMode: "contain",
+                          }}
+                        />
+                      </Marker> */}
+                    </MapView>
+                    <View
+                      style={{
+                        // flex: 0.5,
+                        backgroundColor: Colors.white,
+                        borderTopRightRadius: 20,
+                        borderTopLeftRadius: 20,
+                        marginTop: -20,
+                      }}
+                    >
+                      <View
+                        style={{
+                          height: 38,
+                          backgroundColor: "#F2F2F2",
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          paddingHorizontal: 16,
+                          alignItems: "center",
+                          marginTop: 16,
+                          marginHorizontal: 18,
+                          borderRadius: 10,
+                        }}
+                      >
+                        <TextInput
+                          placeholder="Search for cafes"
+                          style={{ padding: 0 }}
+                        />
+                        <Image source={ImagePath.searchIcon} />
+                      </View>
+                      <View style={{ marginTop: 24 }}>
+                        <Text style={{...commonStyles.font14Regular,marginBottom:8, paddingHorizontal: 32 }}>
+                          Suggestions
+                        </Text>
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          style={{ paddingHorizontal: 32 }}
+                        >
+                          {[
+                            {
+                              title: "Lady Yum New York",
+                              number: "8,4",
+                              review: "85 reviews",
+                            },
+                            {
+                              title: "Nora’s Cafe",
+                              number: "8,2",
+                              review: "34 reviews",
+                            },
+                            {
+                              title: "Yum New York",
+                              number: "2,4",
+                              review: "25 reviews",
+                            },
+                          ]?.map((res, index) => {
+                            return (
+                              <View
+                                style={{
+                                  borderWidth:0.5,
+                                  borderColor:'rgba(0, 0, 0, 0.08)',
+                                  margin:1,
+                                  borderRadius: 10,
+                                  height: 172,
+                                  marginRight:16,
+                                  overflow: "hidden",
+                                  width: 252,
+                                }}
+                              >
+                                <View
+                                  style={{
+                                    height: 100,
+                                    backgroundColor: "#D8D8D8",
+                                  }}
+                                ></View>
+                                <View
+                                  style={{
+                                    flexDirection: "row",
+                                    alignSelf: "flex-end",
+                                    marginTop: -12,
+                                  }}
+                                >
+                                  <View
+                                    style={{
+                                      width: 85,
+                                      height: 24,
+                                      borderRadius: 12,
+                                      marginRight: 16,
+                                      backgroundColor: "#FF8400",
+                                      alignItems:'center',
+                                      justifyContent:'center'
+                                    }}
+                                  >
+                                    <Text style={{...commonStyles.font11GreyMedium,color:'#fff'}}>{res?.review}</Text>
+                                  </View>
+                                  <View
+                                    style={{
+                                      width: 50,
+                                      height: 24,
+                                      borderTopLeftRadius: 12,
+                                      borderBottomLeftRadius: 12,
+                                      backgroundColor: "#7E7E7E",
+                                      alignItems:'center',
+                                      justifyContent:'center'
+                                    }}
+                                  >
+                                    <Text style={{...commonStyles.font11GreyMedium,color:'#fff'}}>{res?.number}</Text>
+                                  </View>
+                                </View>
+                                <Text style={{...commonStyles.font12BlackMedium, marginTop:16,marginLeft:16}}>{res?.title}</Text>
+                              </View>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                      <View style={{marginTop:34,paddingHorizontal:32}}>
+                      <GradientButton
+                        colors={["#FFC634", "#FF8400"]}
+                        title="Confirm location"
+                        customTextStyle={{}}
+                        onPress={() => {
+                          navigation.goBack()
+                        }}
+                      />
+                    </View>
+                    </View>
+                  </Animatable.View>
+                )}
               </View>
             </View>
-          </View>
-        )}
-        </Animatable.View>
-        <CalanderModal
-          isVisible={isDateModalVisible}
-          onClose={dates => {
-            const markedDatesKeys = Object?.keys(dates);
-            const firstIndexDate = markedDatesKeys[1];
-            const lastIndexDate = markedDatesKeys[markedDatesKeys?.length - 1];
-          if(markedDatesKeys.length>2)
-            {
-            
-              setdateRange(
-                `${moment(firstIndexDate, 'YYYY-MM-DD').format(
-                  'DD/MM/YYYY',
-                )} to ${moment(lastIndexDate, 'YYYY-MM-DD').format(
-                  'DD/MM/YYYY',
-                )}`,
-              );
-            }
-            setisDateModalVisible(false);
-          }}
-        />
-        <DateTimePickerModal
-          isVisible={isDatePickerVisible}
-          mode="time"
-          is24Hour={false}
-          onConfirm={handleConfirm}
-          onCancel={hideDatePicker}
-          buttonTextColorIOS={Colors.appColorPrimary}
-        />
-        <CommonModal
-          isVisible={isPeopleModalVisible}
-          value={contentType == 2 ? age : numberPeople}
-          contentType={contentType}
-          onClose={data => {
-            if (contentType == 2) {
-              setage(data);
-            }
-            if (contentType == 1) {
-              setnumberPeople(data);
-            }
-            if (contentType == 3) {
-              setGender(data);
-            }
-            if (contentType == 4) {
-              setlangType(data.name);
-            }
-            setisPeopleModalVisible(false);
-          }}
-        />
-        <UploadImageOptionSheet
-          isVisible={isModalSheetVisible}
-          onGallery={onGallery}
-          onCamera={onCamera}
-          onClose={() => setisModalSheetVisible(false)}
-        />
-        </SafeAreaView>
-      </KeyboardAwareScrollView>
-      {isReadyToCreate && currentPossition != 3 && (
-        <View
-          style={{
-            width: 16,
-            height: height,
-            position: 'absolute',
-            backgroundColor: '#FF8400',
-            marginTop: 0,
-            right: 0,
-            overflow: 'visible',
-            justifyContent: 'center',
-          }}>
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => {
-              setanimateClassName('slideInRight')
-              setcurrentPossition(currentPossition + 1);
+          </Animatable.View>
+          <CalanderModal
+            isVisible={isDateModalVisible}
+            onClose={(dates) => {
+              const markedDatesKeys = Object?.keys(dates);
+              const firstIndexDate = markedDatesKeys[1];
+              const lastIndexDate =
+                markedDatesKeys[markedDatesKeys?.length - 1];
+              if (markedDatesKeys.length > 2) {
+                setdateRange(
+                  `${moment(firstIndexDate, "YYYY-MM-DD").format(
+                    "DD/MM/YYYY"
+                  )} to ${moment(lastIndexDate, "YYYY-MM-DD").format(
+                    "DD/MM/YYYY"
+                  )}`
+                );
+              }
+              setisDateModalVisible(false);
             }}
-            style={{
-              marginLeft: -38,
-              position: 'absolute',
-              bottom: height / 3.8,
-            }}>
-            <Image source={ImagePath.shape_ic} />
-          </TouchableOpacity>
-        </View>
-      )}
-      <SelectTimeRangeModal
-      onClose={()=>setisTimeModalVisible(false)}
-      startTime={startTime}
-      endTime={endTime}
-      setstartTime={setstartTime}
-      setendTime={setendTime}
-      isVisible={isTimeModalVisible}/>
+          />
+          <DateTimePickerModal
+            isVisible={isDatePickerVisible}
+            mode={calMode}
+            is24Hour={false}
+            onConfirm={handleConfirm}
+            onCancel={hideDatePicker}
+            buttonTextColorIOS={Colors.appColorPrimary}
+          />
+          <UploadImageOptionSheet
+            isVisible={isModalSheetVisible}
+            onGallery={onGallery}
+            onCamera={onCamera}
+            onClose={() => setisModalSheetVisible(false)}
+          />
+        </SafeAreaView>
+        <View style={{height:70}}/>
+      </KeyboardAwareScrollView>
+
+     
       <SelectAgeModal
-      isVisible={isAgeModalVisible}
-      onClose={()=>setisAgeModalVisible(false)}
-      minAge={minAge}
-      maxAge={maxAge}
-      setminAge={setminAge}
-      setmaxAge={setmaxAge}
+        isVisible={isAgeModalVisible}
+        onClose={() => setisAgeModalVisible(false)}
+        minAge={minAge}
+        maxAge={maxAge}
+        setminAge={setminAge}
+        setmaxAge={setmaxAge}
       />
-      </View>
-    // </WrapperContainer>
+    </View>
   );
 }
 const styles = StyleSheet.create({
   listView: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginLeft: 24,
     borderBottomColor: Colors?.borderColor1,
     marginRight: 48,
@@ -771,39 +896,35 @@ const styles = StyleSheet.create({
     ...commonStyles.font14Regular,
     color: Colors?.greyText,
   },
-  mainView:
-  {
-    borderRadius:20,
-      overflow: 'hidden',
-      backgroundColor: Colors.white,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 16,
-    },
-    headerText: {
-      ...commonStyles.font14Regular,
-      color: Colors.appColorPrimary,
-    },
-    datesTabView:
-    {
-      height: 40,
-      marginBottom: 8,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 24,
-      marginTop: 16,
-    },
-    dateView:
-    {
-      borderBottomWidth: 3,
-      flex: 0.4,
-      alignItems: 'center',
-      paddingBottom: 4,
-      borderRadius: 2,
-    
-    }
+  mainView: {
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: Colors.white,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 16,
+  },
+  headerText: {
+    ...commonStyles.font14Regular,
+    color: Colors.appColorPrimary,
+  },
+  datesTabView: {
+    height: 40,
+    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    marginTop: 16,
+  },
+  dateView: {
+    borderBottomWidth: 3,
+    flex: 0.4,
+    alignItems: "center",
+    paddingBottom: 4,
+    borderRadius: 2,
+  },
 });
