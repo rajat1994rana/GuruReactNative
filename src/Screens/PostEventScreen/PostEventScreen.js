@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Image,
   Pressable,
@@ -7,7 +7,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import * as Animatable from "react-native-animatable";
 import ImagePicker from "react-native-image-crop-picker";
@@ -31,18 +31,22 @@ import GradientView from "../../Components/GradientView";
 import SelectAgeModal from "../../Components/SelectAgeModal";
 import Slider from "../../Components/Slider";
 import UploadImageOptionSheet from "../../Components/UploadImageOptionSheet";
-import {
-  width
-} from "../../Styles/responsiveSize";
+import { width } from "../../Styles/responsiveSize";
 import ProgressBar from "./ProgressBar";
+import Loader from "../../Components/Loader";
+import { getLocation } from "../../utils/helperFunctions";
+import { FlatList } from "react-native";
 export default function PostEventScreen({ navigation }) {
   const locationInfo = useSelector((data) => data?.location?.locationInfo);
-
+  const [eventType, setEventType] = useState(1);
   const [imagesData, setimagesData] = useState([]);
   const [postImage, setpostImage] = useState("");
   const [eventName, seteventName] = useState("");
   const [startTime, setstartTime] = useState(moment().format("HH:MM A"));
-  const [endTime, setendTime] = useState(moment().add(4,'hour').format("HH:MM A"));
+  const [selectedCardIndex, setselectedCardIndex] = useState(-1);
+  const [endTime, setendTime] = useState(
+    moment().add(4, "hour").format("HH:MM A")
+  );
 
   const [state, setState] = useState({
     selectedLat: locationInfo?.coords?.latitude,
@@ -50,10 +54,19 @@ export default function PostEventScreen({ navigation }) {
     searchedLocation: "",
     isLoading: false,
     locationDetails: "",
+    locationNameLat: locationInfo?.coords?.latitude,
+    locationNameLng: locationInfo?.coords?.longitude,
+    latitudeDelta: 0.015,
+    longitudeDelta: 0.0121,
   });
   const {
     selectedLng,
     selectedLat,
+    isLoading,
+    locationNameLat,
+    locationNameLng,
+    longitudeDelta,
+    latitudeDelta,
   } = state;
   const updateState = (data) => setState((state) => ({ ...state, ...data }));
   const [isDateModalVisible, setisDateModalVisible] = useState(false);
@@ -64,46 +77,71 @@ export default function PostEventScreen({ navigation }) {
   const [minAge, setminAge] = useState("");
   const [maxAge, setmaxAge] = useState("");
   const [isAgeModalVisible, setisAgeModalVisible] = useState(false);
-  const [startTimeSeleted, setstartTimeSeleted] = useState(false)
-  const [endTimeSelected, setEndTimeSelected] = useState(false)
-  const [isSelectedModeDate, setIsSelectedModeDate] = useState(false)
-  const [calMode, setcalMode] = useState('time')
-  const [date, setdate] = useState(moment()?.format("dddd, MMMM YYYY"))
-
- 
-  
+  const [startTimeSeleted, setstartTimeSeleted] = useState(false);
+  const [endTimeSelected, setEndTimeSelected] = useState(false);
+  const [isSelectedModeDate, setIsSelectedModeDate] = useState(false);
+  const [calMode, setcalMode] = useState("time");
+  const [date, setdate] = useState(moment()?.format("dddd, MMMM YYYY"));
+  const [cafeRestaurantsData, setcafeRestaurantsData] = useState([]);
+  const [allCafesData, setallCafesData] = useState([]);
+  const [searchType, setsearchType] = useState(
+    eventType == 1 ? "cafe" : "restaurant"
+  );
+  const [userAddress, setuserAddress] = useState("");
   const hideDatePicker = () => {
     setDatePickerVisibility(false);
   };
+
+  useEffect(() => {
+    getLocation(locationNameLat, locationNameLng)
+      .then((res) => {
+        let data = { ...res };
+        setuserAddress(data);
+        console.log(data, "datadata");
+      })
+      .catch((error) => {});
+  }, [locationNameLat, locationNameLng]);
+
   const handleConfirm = (date) => {
-    if(startTimeSeleted)
-    {
-      setstartTime(moment(date).format("HH:MM A"))
+    if (startTimeSeleted) {
+      setstartTime(moment(date).format("HH:MM A"));
       hideDatePicker();
-      setstartTimeSeleted(false)
-      return
+      setstartTimeSeleted(false);
+      return;
     }
-    if(endTimeSelected)
-    {
-      setendTime(moment(date).format("HH:MM A"))
+    if (endTimeSelected) {
+      setendTime(moment(date).format("HH:MM A"));
       hideDatePicker();
-      setEndTimeSelected(false)
-      return
+      setEndTimeSelected(false);
+      return;
     }
-    if(isSelectedModeDate)
-    {
-      setdate(moment(date).format("dddd, MMMM YYYY"))
+    if (isSelectedModeDate) {
+      setdate(moment(date).format("dddd, MMMM YYYY"));
       hideDatePicker();
-      setIsSelectedModeDate(false)
-      return
+      setIsSelectedModeDate(false);
+      return;
     }
   };
-  const getLocationName = async () => {
+  useEffect(() => {
+    getLocationName(searchType);
+  }, [currentStep, searchType, selectedLat, selectedLng]);
+
+  const getLocationName = async (searchType) => {
     try {
+      updateState({ isLoading: true });
+      // const response = await fetch(
+      //   `https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLat}&lon=${selectedLng}`
+      // );
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLat}&lon=${selectedLng}`
+        `https://maps.googleapis.com/maps/api/place/nearbysearch/json?radius=1500&type=${searchType}&key=AIzaSyAzu0SpTkD5ZJL_NLxDUIIKXrQ6SCFAVfg&location=${selectedLat},${selectedLng}`
       );
+
       const data = await response.json();
+      setcafeRestaurantsData(data?.results);
+      setallCafesData(data?.results);
+      updateState({ isLoading: false });
+
+      return;
       // console.log(data,"datatatat");
       const locationName = data?.display_name;
       const locationCity = data?.address?.city
@@ -122,7 +160,7 @@ export default function PostEventScreen({ navigation }) {
       return "Unknown Location";
     }
   };
-  
+
   const onGallery = () => {
     ImagePicker.openPicker({
       width: 300,
@@ -156,18 +194,122 @@ export default function PostEventScreen({ navigation }) {
   const handleStepPress = (step) => {
     setCurrentStep(step);
   };
-  const [eventType, setEventType] = useState(1);
   const [selectedGen, setselectedGen] = useState("Evryone");
   const [lang, setlang] = useState("English");
   const [guest, setguest] = useState(1);
   const chandigarhMarkers = [
-    { id: 1, title: 'Marker 1', coordinate: { latitude: 30.7333, longitude: 76.7794 } },
-    { id: 2, title: 'Marker 2', coordinate: { latitude: 30.7122, longitude: 76.7684 } },
-    { id: 3, title: 'Marker 3', coordinate: { latitude: 30.7278, longitude: 76.7971 } },
-    { id: 4, title: 'Marker 4', coordinate: { latitude: 30.7069, longitude: 76.8104 } },
-    { id: 6, title: 'Marker 6', coordinate: { latitude: 30.7500, longitude: 76.800 } },
+    {
+      id: 1,
+      title: "Marker 1",
+      coordinate: { latitude: 30.7333, longitude: 76.7794 },
+    },
+    {
+      id: 2,
+      title: "Marker 2",
+      coordinate: { latitude: 30.7122, longitude: 76.7684 },
+    },
+    {
+      id: 3,
+      title: "Marker 3",
+      coordinate: { latitude: 30.7278, longitude: 76.7971 },
+    },
+    {
+      id: 4,
+      title: "Marker 4",
+      coordinate: { latitude: 30.7069, longitude: 76.8104 },
+    },
+    {
+      id: 6,
+      title: "Marker 6",
+      coordinate: { latitude: 30.75, longitude: 76.8 },
+    },
     // Add more markers as needed
   ];
+  const inputRef = useRef(null);
+  const flatListRef = useRef(null);
+
+  const scrollToIndex = (index) => {
+    flatListRef.current.scrollToIndex({ index, animated: true });
+  };
+  const renderItem = ({ item, index }) => {
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          setselectedCardIndex(index);
+          updateState({
+            locationNameLat: item.geometry?.location?.lat,
+            locationNameLng: item.geometry?.location?.lng,
+          });
+        }}
+        style={{
+          borderWidth: selectedCardIndex === index ? 2 : 0.5,
+          borderColor:
+            selectedCardIndex === index
+              ? Colors?.appColorPrimary
+              : "rgba(0, 0, 0, 0.08)",
+          margin: 1,
+          borderRadius: 10,
+          height: 172,
+          marginRight: 16,
+          overflow: "hidden",
+          width: 252,
+        }}
+      >
+        <View style={{ height: 100, backgroundColor: "#D8D8D8" }}>
+          <Image
+            source={{
+              uri: !!item?.photos?.length
+                ? `https://maps.googleapis.com/maps/api/place/photo?photoreference=${item?.photos[0]?.photo_reference}&sensor=false&maxheight=${item?.photos[0]?.height}&maxwidth=${item?.photos[0]?.width}&key=AIzaSyAzu0SpTkD5ZJL_NLxDUIIKXrQ6SCFAVfg`
+                : item?.icon,
+            }}
+            style={{ width: "100%", height: 100, resizeMode: "cover" }}
+          />
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            alignSelf: "flex-end",
+            marginTop: -12,
+          }}
+        >
+          <View
+            style={{
+              minWidth: 85,
+              paddingHorizontal: 8,
+              height: 24,
+              borderRadius: 12,
+              marginRight: 16,
+              backgroundColor: "#FF8400",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ fontSize: 11, color: "#fff" }}>
+              {item?.user_ratings_total ?? 0} reviews
+            </Text>
+          </View>
+          <View
+            style={{
+              width: 50,
+              height: 24,
+              borderTopLeftRadius: 12,
+              borderBottomLeftRadius: 12,
+              backgroundColor: "#7E7E7E",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ fontSize: 11, color: "#fff" }}>
+              {item?.rating ?? 0}
+            </Text>
+          </View>
+        </View>
+        <Text style={{ fontSize: 12, marginTop: 16, marginLeft: 16 }}>
+          {item?.name}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
   return (
     <View style={{ flex: 1, backgroundColor: Colors.white }}>
       <KeyboardAwareScrollView
@@ -198,34 +340,44 @@ export default function PostEventScreen({ navigation }) {
                             ? ["#FFC634", "#FF8400"]
                             : ["#EFF0F0", "#EFF0F0"]
                         }
-                        style={{
-                          marginRight: 8,
-                          flexDirection: "row",
-                          height: 26,
-                          paddingHorizontal: 5,
-                          borderRadius: 5,
-                          alignItems: "center",
-                        }}
+                        style={{ marginRight: 8, borderRadius: 5 }}
                       >
-                        <Image
-                          source={res?.image}
+                        <TouchableOpacity
+                          activeOpacity={1}
+                          // onPress={() => {
+                          //   setEventType(index + 1);
+                          //   setsearchType(
+                          //     index + 1 == 1 ? "cafe" : "restaurant"
+                          //   );
+                          // }}
                           style={{
-                            width: 15,
-                            height: 15,
-                            resizeMode: "contain",
-                            tintColor:
-                              eventType == index + 1 ? "#fff" : "#656363",
-                          }}
-                        />
-                        <Text
-                          style={{
-                            ...commonStyles?.font12BlackBold,
-                            marginLeft: 6,
-                            color: eventType == index + 1 ? "#fff" : "#656363",
+                            flexDirection: "row",
+                            height: 26,
+                            paddingHorizontal: 5,
+                            alignItems: "center",
                           }}
                         >
-                          {res?.name}
-                        </Text>
+                          <Image
+                            source={res?.image}
+                            style={{
+                              width: 15,
+                              height: 15,
+                              resizeMode: "contain",
+                              tintColor:
+                                eventType == index + 1 ? "#fff" : "#656363",
+                            }}
+                          />
+                          <Text
+                            style={{
+                              ...commonStyles?.font12BlackBold,
+                              marginLeft: 6,
+                              color:
+                                eventType == index + 1 ? "#fff" : "#656363",
+                            }}
+                          >
+                            {res?.name}
+                          </Text>
+                        </TouchableOpacity>
                       </LinearGradient>
                     );
                   })}
@@ -236,10 +388,9 @@ export default function PostEventScreen({ navigation }) {
                 showLeft={ImagePath.backBtn}
                 headerTextStyle={{ ...commonStyles.font30Italic }}
                 onPressLeft={() => {
-                  if(currentStep==1)
-                  {
-                    navigation.goBack()
-                    return
+                  if (currentStep == 1) {
+                    navigation.goBack();
+                    return;
                   }
                   handleStepPress(currentStep - 1);
                 }}
@@ -375,6 +526,7 @@ export default function PostEventScreen({ navigation }) {
                       <GradientView
                         onPress={() => {
                           setEventType(1);
+                          setsearchType("cafe");
                         }}
                         image={ImagePath.cup}
                         eventType={1}
@@ -393,6 +545,7 @@ export default function PostEventScreen({ navigation }) {
                       <GradientView
                         onPress={() => {
                           setEventType(2);
+                          setsearchType("restaurant");
                         }}
                         image={ImagePath.plat}
                         eventType={2}
@@ -409,55 +562,65 @@ export default function PostEventScreen({ navigation }) {
                         }
                       />
                     </View>
-                    <View style={{ flexDirection: "row", marginTop: 80 }}>
+                    <View style={{ marginTop: 50 }}>
+                      <Text style={{ ...commonStyles.font12Regular }}>
+                        {userAddress?.address}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: "row", marginTop: 30 }}>
                       <Image source={ImagePath.watch} />
                       <View style={{ marginLeft: 16 }}>
-                        <View style={{flexDirection:'row'}}>
-                          <TouchableOpacity onPress={()=>{
-                            setDatePickerVisibility(true)
-                            setstartTimeSeleted(true)
-                            setcalMode('time')
-                          }}>
-                          <Text
-                          style={{
-                            ...commonStyles.font14BlackMedium,
-                            color: "#4D4F59",
-                          }}
-                        >
-                          {startTime}
-                        </Text>
+                        <View style={{ flexDirection: "row" }}>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setDatePickerVisibility(true);
+                              setstartTimeSeleted(true);
+                              setcalMode("time");
+                            }}
+                          >
+                            <Text
+                              style={{
+                                ...commonStyles.font14BlackMedium,
+                                color: "#4D4F59",
+                              }}
+                            >
+                              {startTime}
+                            </Text>
                           </TouchableOpacity>
-                          <TouchableOpacity onPress={()=>{
-                            setDatePickerVisibility(true)
-                            setEndTimeSelected(true)
-                            setcalMode('time')
-                          }}>
-                          <Text
-                          style={{
-                            ...commonStyles.font14BlackMedium,
-                            color: "#4D4F59",
-                          }}
-                        >
-                          {` - ${endTime}`}
-                          <Text style={{ color: "red" }}>*</Text>
-                        </Text>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setDatePickerVisibility(true);
+                              setEndTimeSelected(true);
+                              setcalMode("time");
+                            }}
+                          >
+                            <Text
+                              style={{
+                                ...commonStyles.font14BlackMedium,
+                                color: "#4D4F59",
+                              }}
+                            >
+                              {` - ${endTime}`}
+                              <Text style={{ color: "red" }}>*</Text>
+                            </Text>
                           </TouchableOpacity>
-                          
                         </View>
-                        <TouchableOpacity onPress={()=>{
-                            setDatePickerVisibility(true)
-                            setIsSelectedModeDate(true)
-                            setcalMode('date')
-                          }}>
-                       <Text
-                          style={{
-                            ...commonStyles.font14Regular,
-                            color: "#4D4F59",
+                        <TouchableOpacity
+                          onPress={() => {
+                            setDatePickerVisibility(true);
+                            setIsSelectedModeDate(true);
+                            setcalMode("date");
                           }}
                         >
-                          {date}
-                        </Text>
-                       </TouchableOpacity>
+                          <Text
+                            style={{
+                              ...commonStyles.font14Regular,
+                              color: "#4D4F59",
+                            }}
+                          >
+                            {date}
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                     <View
@@ -604,116 +767,80 @@ export default function PostEventScreen({ navigation }) {
                     style={{ flex: 1 }}
                   >
                     <MapView
-                      //provider={PROVIDER_GOOGLE} // remove if not using Google Maps
                       style={{
                         ...styles.map,
                         alignSelf: "center",
-                        //  overflow: 'hidden'
                         width: "100%",
                         zIndex: -100,
                         flex: 1,
-                        // height: moderateScaleVertical(500),
-                      }}
-                      onRegionChangeComplete={(e) => {
-                        console.log(e, "euwnfuwneufnewu"),
-                          updateState({
-                            selectedLat: e.latitude,
-                            selectedLng: e.longitude,
-                          });
-                        getLocationName();
-                        // updateState({selectedLat:e.latitude,selectedLng:e.longitude});
-                        // markerRef.current.setNativeProps({ title: locationDetails, description: searchedLocation });
                       }}
                       zoomEnabled={true}
                       moveOnMarkerPress={true}
-                      //customMapStyle={{borderRadius:400,width:"100%",height:moderateScaleVertical(isKeyboardShown?140:400)}}
-                      // region={{
-                      //   latitude: selectedLat,
-                      //   longitude: selectedLng,
-                      //   latitudeDelta: 0.015,
-                      //   longitudeDelta: 0.0121,
-                      // }}
+                      region={{
+                        latitude: selectedLat,
+                        longitude: selectedLng,
+                        latitudeDelta: latitudeDelta,
+                        longitudeDelta: longitudeDelta,
+                      }}
                       initialRegion={{
                         latitude: 30.7333,
                         longitude: 76.7794,
                         latitudeDelta: 0.0922,
                         longitudeDelta: 0.0421,
                       }}
+                      onRegionChangeComplete={(e) => {
+                        console.log(JSON.stringify(e));
+                        setselectedCardIndex(-1);
+                        updateState({
+                          selectedLat: e.latitude,
+                          selectedLng: e.longitude,
+                          longitudeDelta:e?.longitudeDelta,
+                          latitudeDelta:e?.latitudeDelta
+                        });
+                      }}
                     >
-                      {chandigarhMarkers.map(marker => (
-          <Marker
-            key={marker.id}
-            coordinate={marker.coordinate}
-            title={marker.title}
-            tracksInfoWindowChanges={true}
-                        isPreselected={true}
-            description={`Latitude: ${marker.coordinate.latitude}, Longitude: ${marker.coordinate.longitude}`}
-          >
-            <Image
-                          source={ImagePath.locationPin}
-                          style={{
-                            width: 44,
-                            height: 44,
-                            resizeMode: "contain",
-                          }}
-                        />
-            </Marker>
-        ))}
-                      {/* <Marker
-                        key={selectedLat}
-                        ref={(ref) => (markerRef.current = ref)}
-                        coordinate={{
-                          latitude: selectedLat,
-                          longitude: selectedLng,
-                        }}
-                        tappable={true}
-                        title={locationDetails}
-                        description={searchedLocation}
-                        tracksInfoWindowChanges={true}
-                        isPreselected={true}
-                      >
-                        <Image
-                          source={ImagePath.locationPin}
-                          style={{
-                            width: 44,
-                            height: 44,
-                            resizeMode: "contain",
-                          }}
-                        />
-                      </Marker>
-                      <Marker
-                        key={selectedLat}
-                        ref={(ref) => (markerRef.current = ref)}
-                        coordinate={{
-                          latitude: selectedLat,
-                          longitude: selectedLng,
-                        }}
-                        tappable={true}
-                        title={locationDetails}
-                        description={searchedLocation}
-                        tracksInfoWindowChanges={true}
-                        isPreselected={true}
-                      >
-                        <Image
-                          source={ImagePath.locationPin}
-                          style={{
-                            width: 44,
-                            height: 44,
-                            resizeMode: "contain",
-                          }}
-                        />
-                      </Marker> */}
+                      {cafeRestaurantsData.map((marker, ind) => {
+                        let markerObj = {
+                          latitude: marker?.geometry?.location?.lat,
+                          longitude: marker?.geometry?.location?.lng,
+                        };
+                        return (
+                          <Marker
+                            key={marker.place_id}
+                            coordinate={markerObj}
+                            tracksInfoWindowChanges={true}
+                            onPress={() => {
+                              console.log(
+                                JSON?.stringify(marker.name, null, 2)
+                              );
+                              scrollToIndex(ind);
+                            }}
+                          >
+                            <Image
+                              source={ImagePath.locationPin}
+                              style={{
+                                width: 44,
+                                height: 44,
+                                resizeMode: "contain",
+                              }}
+                            />
+                          </Marker>
+                        );
+                      })}
                     </MapView>
                     <View
                       style={{
-                        // flex: 0.5,
                         backgroundColor: Colors.white,
                         borderTopRightRadius: 20,
                         borderTopLeftRadius: 20,
                         marginTop: -20,
                       }}
                     >
-                      <View
+                      <TouchableOpacity
+                        activeOpacity={1}
+                        onPress={() => {
+                          inputRef?.current?.focus();
+                        }}
                         style={{
                           height: 38,
                           backgroundColor: "#F2F2F2",
@@ -727,106 +854,56 @@ export default function PostEventScreen({ navigation }) {
                         }}
                       >
                         <TextInput
-                          placeholder="Search for cafes"
+                          ref={inputRef}
+                          placeholder={`Search for ${searchType}s`}
                           style={{ padding: 0 }}
+                          onChangeText={(val) => {
+                            let arr = [...allCafesData];
+                            const lowercaseSearchText = val.toLowerCase();
+                            const result = arr.filter((location) =>
+                              location.name
+                                .toLowerCase()
+                                .includes(lowercaseSearchText)
+                            );
+                            if (result) {
+                              setcafeRestaurantsData(result);
+                            } else {
+                              setcafeRestaurantsData(allCafesData);
+                            }
+                          }}
                         />
                         <Image source={ImagePath.searchIcon} />
-                      </View>
+                      </TouchableOpacity>
                       <View style={{ marginTop: 24 }}>
-                        <Text style={{...commonStyles.font14Regular,marginBottom:8, paddingHorizontal: 32 }}>
+                        <Text
+                          style={{
+                            ...commonStyles.font14Regular,
+                            marginBottom: 8,
+                            paddingHorizontal: 32,
+                          }}
+                        >
                           Suggestions
                         </Text>
-                        <ScrollView
+                        <FlatList
+                          ref={flatListRef}
                           horizontal
+                          data={cafeRestaurantsData}
+                          keyExtractor={(item, index) => index.toString()}
+                          renderItem={renderItem}
                           showsHorizontalScrollIndicator={false}
-                          style={{ paddingHorizontal: 32 }}
-                        >
-                          {[
-                            {
-                              title: "Lady Yum New York",
-                              number: "8,4",
-                              review: "85 reviews",
-                            },
-                            {
-                              title: "Nora’s Cafe",
-                              number: "8,2",
-                              review: "34 reviews",
-                            },
-                            {
-                              title: "Yum New York",
-                              number: "2,4",
-                              review: "25 reviews",
-                            },
-                          ]?.map((res, index) => {
-                            return (
-                              <View
-                                style={{
-                                  borderWidth:0.5,
-                                  borderColor:'rgba(0, 0, 0, 0.08)',
-                                  margin:1,
-                                  borderRadius: 10,
-                                  height: 172,
-                                  marginRight:16,
-                                  overflow: "hidden",
-                                  width: 252,
-                                }}
-                              >
-                                <View
-                                  style={{
-                                    height: 100,
-                                    backgroundColor: "#D8D8D8",
-                                  }}
-                                ></View>
-                                <View
-                                  style={{
-                                    flexDirection: "row",
-                                    alignSelf: "flex-end",
-                                    marginTop: -12,
-                                  }}
-                                >
-                                  <View
-                                    style={{
-                                      width: 85,
-                                      height: 24,
-                                      borderRadius: 12,
-                                      marginRight: 16,
-                                      backgroundColor: "#FF8400",
-                                      alignItems:'center',
-                                      justifyContent:'center'
-                                    }}
-                                  >
-                                    <Text style={{...commonStyles.font11GreyMedium,color:'#fff'}}>{res?.review}</Text>
-                                  </View>
-                                  <View
-                                    style={{
-                                      width: 50,
-                                      height: 24,
-                                      borderTopLeftRadius: 12,
-                                      borderBottomLeftRadius: 12,
-                                      backgroundColor: "#7E7E7E",
-                                      alignItems:'center',
-                                      justifyContent:'center'
-                                    }}
-                                  >
-                                    <Text style={{...commonStyles.font11GreyMedium,color:'#fff'}}>{res?.number}</Text>
-                                  </View>
-                                </View>
-                                <Text style={{...commonStyles.font12BlackMedium, marginTop:16,marginLeft:16}}>{res?.title}</Text>
-                              </View>
-                            );
-                          })}
-                        </ScrollView>
+                          contentContainerStyle={{ paddingHorizontal: 32 }}
+                        />
                       </View>
-                      <View style={{marginTop:34,paddingHorizontal:32}}>
-                      <GradientButton
-                        colors={["#FFC634", "#FF8400"]}
-                        title="Confirm location"
-                        customTextStyle={{}}
-                        onPress={() => {
-                          navigation.goBack()
-                        }}
-                      />
-                    </View>
+                      <View style={{ marginTop: 34, paddingHorizontal: 32 }}>
+                        <GradientButton
+                          colors={["#FFC634", "#FF8400"]}
+                          title="Confirm location"
+                          customTextStyle={{}}
+                          onPress={() => {
+                            handleStepPress(currentStep - 1);
+                          }}
+                        />
+                      </View>
                     </View>
                   </Animatable.View>
                 )}
@@ -867,10 +944,9 @@ export default function PostEventScreen({ navigation }) {
             onClose={() => setisModalSheetVisible(false)}
           />
         </SafeAreaView>
-        <View style={{height:70}}/>
+        <View style={{ height: currentStep != 3 ? 70 : 0 }} />
       </KeyboardAwareScrollView>
 
-     
       <SelectAgeModal
         isVisible={isAgeModalVisible}
         onClose={() => setisAgeModalVisible(false)}
@@ -879,6 +955,7 @@ export default function PostEventScreen({ navigation }) {
         setminAge={setminAge}
         setmaxAge={setmaxAge}
       />
+      <Loader isLoading={isLoading} />
     </View>
   );
 }
